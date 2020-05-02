@@ -2,7 +2,7 @@ from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
 from bs4 import BeautifulSoup
-import argparse, re, sys
+import argparse, re, sys, logging, os
 
 def get_page(url):
   """
@@ -18,7 +18,7 @@ def get_page(url):
         return None
 
   except RequestException as e:
-    log_error('Error during requests to {0} : {1}'.format(url, str(e)))
+    log.critical('Error during requests to {0} : {1}'.format(url, str(e)))
     return None
 
 def is_response_good(resp):
@@ -32,8 +32,23 @@ def is_content_html(resp):
   return (content_type is not None 
           and content_type.find('html') > -1)
 
+def _setup_custom_logger():
+    formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',
+                                  datefmt='%Y-%m-%d %H:%M:%S')
+    #handler = logging.FileHandler(CONFIG_JSON['log_output'], mode='w')
+    #handler.setFormatter(formatter)
+    screen_handler = logging.StreamHandler(stream=sys.stdout)
+    screen_handler.setFormatter(formatter)
+    logger = logging.getLogger(__name__)
+    logger.setLevel('DEBUG')
+    #logger.addHandler(handler)
+    logger.addHandler(screen_handler)
+    return logger
+
 if __name__ == '__main__':
   # setting up argument parser
+  log = _setup_custom_logger()
+
   parser = argparse.ArgumentParser(description='Downloads mp3 file with Polish Radio programme.')
   parser.add_argument('url', type=str, help='link to polskieradio.pl website where the programme can be heard online')
 
@@ -62,7 +77,7 @@ if __name__ == '__main__':
   if not programme_date:
     programme_date = 'no_date'
 
-  print('Found \"' + programme_title + '\" from ' + programme_date + '...')
+  log.info('Found \"' + programme_title + '\" from ' + programme_date)
 
   # find audio url
   audio_url = ''
@@ -78,13 +93,13 @@ if __name__ == '__main__':
       audio_url = matches[0]
 
   audio_url = 'https:' + audio_url
-  print('URL detected: ' + audio_url)
+  log.info('URL detected: ' + audio_url)
 
   # download blob
   output_file_name = programme_title + ' - ' + programme_date + '.mp3'
 
   with open(output_file_name, "wb") as f:
-    print("Downloading to %s" % output_file_name)
+    log.info("Downloading to: %s/%s" % (os.getcwd(), output_file_name))
     response = get(audio_url, stream=True)
 
     total_length = response.headers.get('content-length')
@@ -100,4 +115,5 @@ if __name__ == '__main__':
         done = int(50 * dl / total_length)
         sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )    
         sys.stdout.flush()
-      sys.stdout.write('\n')
+      sys.stdout.write('\r%s\r' % (' ' * 52))
+      log.info('Download complete!')
