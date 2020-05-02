@@ -3,8 +3,8 @@ Simple Python tool for downloading radio programmes from [Polish Radio](https://
 
 ## Background
 Polish Radio, a Polish public broadcaster, has vast archives of the past programmes on its website.
-The mobile access to this content is currently limited, compared to the desktop browser.
-This app allows for downloading a programme based on the link to the website where it is available to listen on a desktop browser.
+The mobile and offline access to this content is currently limited.
+This app allows for downloading a programme based on the link to the website where it is available to listen online.
 
 # Usage
 1. Make sure you are using Python 3
