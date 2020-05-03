@@ -1,15 +1,18 @@
+# PRScrapper
+# 
+# version: 2020/05/03
+# author: Matt Grabara
+#
+# Downloads Polish Radio programes from official Polish Radio website
+
 from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
 from bs4 import BeautifulSoup
 import argparse, re, sys, logging, os
 
+# Attempts to retrieve the web page from url for further scrapping
 def get_page(url):
-  """
-  Attempts to get the content at `url` by making an HTTP GET request.
-  If the content-type of response is some kind of HTML/XML, return the
-  text content, otherwise return None.
-  """
   try:
     with closing(get(url, stream=True)) as resp:
       if is_response_good(resp) and is_content_html(resp):
@@ -21,36 +24,47 @@ def get_page(url):
     log.critical('Error during requests to {0} : {1}'.format(url, str(e)))
     return None
 
+# Checks if reponse code is OK (200)
 def is_response_good(resp):
   return resp.status_code == 200
 
+# Checks if the retrieved content is HTML based on Content-Type header
 def is_content_html(resp):
-  """
-  Returns True if the response seems to be HTML, False otherwise.
-  """
   content_type = resp.headers['Content-Type'].lower()
   return (content_type is not None 
           and content_type.find('html') > -1)
 
+# Handles logger initialisation
 def _setup_custom_logger():
-    formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',
-                                  datefmt='%Y-%m-%d %H:%M:%S')
-    #handler = logging.FileHandler(CONFIG_JSON['log_output'], mode='w')
-    #handler.setFormatter(formatter)
-    screen_handler = logging.StreamHandler(stream=sys.stdout)
-    screen_handler.setFormatter(formatter)
-    logger = logging.getLogger(__name__)
-    logger.setLevel('DEBUG')
-    #logger.addHandler(handler)
-    logger.addHandler(screen_handler)
-    return logger
+  # retrieve logger instance
+  logger = logging.getLogger(__name__)
 
+  # set log format
+  formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',
+                                datefmt='%Y-%m-%d %H:%M:%S')
+  
+  # set logging to standard output
+  screen_handler = logging.StreamHandler(stream=sys.stdout)
+  screen_handler.setFormatter(formatter)
+  logger.addHandler(screen_handler)
+  
+  # uncomment below lines for logging to a file
+  #handler = logging.FileHandler('log.out', mode='w')
+  #handler.setFormatter(formatter)
+  #logger.addHandler(handler)
+
+  # set logging level
+  logger.setLevel('DEBUG')
+  
+  return logger
+
+# main part of the program
 if __name__ == '__main__':
   # setting up argument parser
   log = _setup_custom_logger()
 
   parser = argparse.ArgumentParser(description='Downloads mp3 file with Polish Radio programme.')
-  parser.add_argument('url', type=str, help='link to polskieradio.pl website where the programme can be heard online')
+  parser.add_argument('url', type=str, help='link to polskieradio.pl website where the programme can be listened to online')
 
   args = parser.parse_args()
 
